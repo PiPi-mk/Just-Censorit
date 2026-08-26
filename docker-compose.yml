@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: purchase_approval
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres

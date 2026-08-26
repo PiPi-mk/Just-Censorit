@@ -1,0 +1,10 @@
+node_modules
+dist
+.turbo
+.DS_Store
+.env
+.env.local
+apps/api/prisma/dev.db
+apps/api/.nestjs-cli.json
+apps/miniapp/dist
+apps/miniapp/.temp

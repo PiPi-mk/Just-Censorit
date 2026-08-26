@@ -1,0 +1,43 @@
+version: 2.1
+
+jobs:
+  verify:
+    docker:
+      - image: cimg/node:20.18
+      - image: cimg/postgres:16.4
+        environment:
+          POSTGRES_DB: purchase_approval
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/purchase_approval?schema=public
+      PORT: 3000
+    steps:
+      - checkout
+      - run:
+          name: Install pnpm 10.14.0 in user space
+          command: |
+            export PNPM_BOOTSTRAP_DIR="$HOME/.local/pnpm-10.14.0"
+            mkdir -p "$PNPM_BOOTSTRAP_DIR"
+            npm install --prefix "$PNPM_BOOTSTRAP_DIR" pnpm@10.14.0
+            echo 'export PATH="$HOME/.local/pnpm-10.14.0/node_modules/.bin:$PATH"' >> "$BASH_ENV"
+            export PATH="$HOME/.local/pnpm-10.14.0/node_modules/.bin:$PATH"
+            pnpm --version
+      - run: pnpm install --no-frozen-lockfile
+      - run: |
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          echo 'Postgres did not become ready in time' >&2
+          exit 1
+      - run: pnpm --filter api prisma:generate
+      - run: pnpm --filter api exec prisma migrate deploy
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm --filter miniapp build
+
+workflows:
+  verify-on-commit:
+    jobs:
+      - verify

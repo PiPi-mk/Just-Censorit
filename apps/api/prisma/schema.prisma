@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(cuid())
+  openId      String        @unique
+  nickname    String
+  avatarUrl   String?
+  ownedGroups Group[]       @relation("GroupOwner")
+  memberships GroupMember[]
+  approvals   Approval[]    @relation("ApprovalCreator")
+  votes       ApprovalVote[]
+  createdAt   DateTime      @default(now())
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  ownerId     String
+  inviteCode  String        @unique
+  owner       User          @relation("GroupOwner", fields: [ownerId], references: [id])
+  members     GroupMember[]
+  approvals   Approval[]
+  inviteCodes InviteCode[]
+  createdAt   DateTime      @default(now())
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String
+  group    Group    @relation(fields: [groupId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model Approval {
+  id                String              @id @default(cuid())
+  groupId           String
+  creatorId         String
+  title             String
+  productName       String
+  productImage      String?
+  productLink       String?
+  unitPrice         Decimal
+  quantity          Int
+  totalPrice        Decimal
+  reason            String
+  currentPain       String?
+  expectedBenefit   String?
+  budgetImpact      String
+  alternativeOption String?
+  riskIfNotBuy      String?
+  ruleType          String
+  allowRevote       Boolean             @default(true)
+  deadlineAt        DateTime
+  status            String              @default("draft")
+  result            String?
+  publishedAt       DateTime?
+  closedAt          DateTime?
+  resultGeneratedAt DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  group             Group               @relation(fields: [groupId], references: [id])
+  creator           User                @relation("ApprovalCreator", fields: [creatorId], references: [id])
+  votes             ApprovalVote[]
+  resultLogs        ApprovalResultLog[]
+}
+
+model ApprovalVote {
+  id         String   @id @default(cuid())
+  approvalId String
+  userId     String
+  voteChoice String
+  voteReason String?
+  votedAt    DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  approval   Approval @relation(fields: [approvalId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([approvalId, userId])
+}
+
+model ApprovalResultLog {
+  id             String   @id @default(cuid())
+  approvalId     String
+  resultType     String
+  ruleType       String
+  agreeCount     Int
+  rejectCount    Int
+  decisionBy     String?
+  decisionReason String?
+  createdAt      DateTime @default(now())
+  approval       Approval @relation(fields: [approvalId], references: [id])
+}
+
+model InviteCode {
+  id        String   @id @default(cuid())
+  groupId   String
+  code      String   @unique
+  createdBy String
+  expiredAt DateTime?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id])
+}
