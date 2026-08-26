@@ -15,9 +15,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install pnpm 10.14.0 from npm
+          name: Install pnpm 10.14.0 in user space
           command: |
-            npm install -g pnpm@10.14.0
+            export PNPM_BOOTSTRAP_DIR="$HOME/.local/pnpm-10.14.0"
+            mkdir -p "$PNPM_BOOTSTRAP_DIR"
+            npm install --prefix "$PNPM_BOOTSTRAP_DIR" pnpm@10.14.0
+            echo 'export PATH="$HOME/.local/pnpm-10.14.0/node_modules/.bin:$PATH"' >> "$BASH_ENV"
+            export PATH="$HOME/.local/pnpm-10.14.0/node_modules/.bin:$PATH"
             pnpm --version
       - run: pnpm install --no-frozen-lockfile
       - run: |
