@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ES2020",
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM"],
+    "types": ["@tarojs/taro", "@tarojs/runtime", "node"]
+  },
+  "include": ["src/**/*"]
+}
